@@ -97,16 +97,16 @@ static void display_inotify_event(struct inotify_event *i)
 
 Inotify::~Inotify()
 {
-        if(m_bRuning)
-            m_bExit = true;
+        if (m_bRuning)
+                m_bExit = true;
 
         while (m_bExit);
 
-        if(m_inotifyFd != -1)
-            close(m_inotifyFd);
+        if (m_inotifyFd != -1)
+                close(m_inotifyFd);
 
-        if(m_epollFd != -1)
-            close(m_epollFd);            
+        if (m_epollFd != -1)
+                close(m_epollFd);
 }
 
 int Inotify::Init()
@@ -122,9 +122,9 @@ int Inotify::Init()
                 fprintf(stderr,
                         "[%s][%s][%d][err] epoll_create1() \n",
                         __FILE__, __PRETTY_FUNCTION__, __LINE__);
-                if(m_inotifyFd != -1) {
-                    close(m_inotifyFd);
-                    m_inotifyFd = -1;
+                if (m_inotifyFd != -1) {
+                        close(m_inotifyFd);
+                        m_inotifyFd = -1;
                 }
 
                 return -1;
@@ -173,6 +173,7 @@ int Inotify::RemoveWatch(const std::string &path)
                         return 0;
                 }
         }
+
         fprintf(stderr,
                 "[%s][%s][%d][err] not exist: %s \n",
                 __FILE__, __PRETTY_FUNCTION__, __LINE__,
@@ -192,7 +193,6 @@ void Inotify::Start(void)
 
         m_thread.reset(new std::thread(&Inotify::Watcher_, this));
         m_thread->detach();
-
 }
 
 #define BUF_LEN (10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
@@ -201,7 +201,7 @@ void Inotify::Start(void)
 void Inotify::Watcher_(void)
 {
         struct inotify_event *event;
-        struct epoll_event   ev; 
+        struct epoll_event   ev;
         struct epoll_event   events[EPOLL_EVENT_LEN];
         char                 *p;
         int                  numRead;
@@ -221,32 +221,33 @@ void Inotify::Watcher_(void)
         while (!m_bExit) {
                 char buf[BUF_LEN] = {0};
 
-                nfds = epoll_wait(m_epollFd, events, 1, 1000);
+                nfds = epoll_wait(m_epollFd, events, 1, 1000); // 1sec
 
-                if((nfds < 0) || m_bExit)
+                if ((nfds < 0) || m_bExit)
                         continue;
 
-                if(events[0].data.fd == m_inotifyFd) {
-                    /* Read events forever */
-                    numRead = read(m_inotifyFd, buf, BUF_LEN);
+                if (events[0].data.fd == m_inotifyFd) {
+                        /* Read events forever */
+                        numRead = read(m_inotifyFd, buf, BUF_LEN);
+                        if (numRead == 0)
+                                continue;
 
-                    if (numRead == 0)
-                            continue;
+                        if (numRead == -1) {
+                                fprintf(stderr,
+                                        "[%s][%s][%d][err] read() \n",
+                                        __FILE__, __PRETTY_FUNCTION__, __LINE__);
+                                continue;
+                        }
 
-                    if (numRead == -1) {
-                            fprintf(stderr,
-                                    "[%s][%s][%d][err] read() \n",
-                                    __FILE__, __PRETTY_FUNCTION__, __LINE__);
-                    }
+                        //printf("Read %ld bytes from inotify fd\n", (long)numRead);
+                        for (p = buf; p < (buf + numRead);) {
+                                event = (struct inotify_event *)p;
 
-                    //printf("Read %ld bytes from inotify fd\n", (long)numRead);
-                    for (p = buf; p < buf + numRead;) {
-                            event = (struct inotify_event *)p;
-                            if (m_observer)
-                                    m_observer->OnNotify(this, event, m_watchMap[event->wd]);
+                                if (m_observer)
+                                        m_observer->OnNotify(this, event, m_watchMap[event->wd]);
 
-                            p += sizeof(struct inotify_event) + event->len;
-                    }
+                                p += sizeof(struct inotify_event) + event->len;
+                        }
                 }
         }
 
@@ -268,26 +269,49 @@ public:
         }
 };
 
+// testing patten
+// ./inotify a b
+// remove a
+// add a
 int main(int argc, char *argv[])
 {
         UnitTest un;
 
         {
-            std::unique_ptr<Inotify> in = std::make_unique<Inotify>();
+                int cnt = 20;
 
-            if (in->Init() == -1)
-                    exit(0);
+                // Using unique_ptr to test destructor
+                std::unique_ptr<Inotify> in = std::make_unique<Inotify>();
 
+                if (in->Init() == -1)
+                        exit(0);
 
-            for (int i = 1; i < argc; i++)
-                    in->AddWatch(argv[i]);
+                // Add
+                for (int i = 1; i < argc; i++)
+                        in->AddWatch(argv[i]);
 
-            in->RegisterObserver(&un);
-            in->Start();
+                in->RegisterObserver(&un);
+                in->Start();
 
-            int cnt = 5;
-            while (--cnt)
-                    sleep(1);
+                printf("Test 1.....\n");
+                while (--cnt)
+                        sleep(1);
+
+                // Test Remove
+                printf("Test 2 remove:%s.....\n", argv[1]);
+                in->RemoveWatch(argv[1]);  
+                cnt = 20;                      
+                while (--cnt)
+                        sleep(1);
+
+                // Test Add
+                printf("Test 3 re add:%s.....\n", argv[1]);
+                in->AddWatch(argv[1]);                        
+                cnt = 20;
+                while (--cnt)
+                        sleep(1);
+
+                printf("finish\n");
         }
         return 0;
 }
