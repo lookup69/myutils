@@ -244,7 +244,7 @@ void Inotify::Watcher_(void)
                                 event = (struct inotify_event *)p;
 
                                 if (m_observer)
-                                        m_observer->OnNotify(this, event, m_watchMap[event->wd]);
+                                        m_observer->OnInotifyEvent(this, event, m_watchMap[event->wd]);
 
                                 p += sizeof(struct inotify_event) + event->len;
                         }
@@ -261,7 +261,7 @@ void Inotify::Watcher_(void)
 class UnitTest : public InotifyObserver
 {
 public:
-        int OnNotify(Inotify *inotify, struct inotify_event *event, const std::string &path) override
+        int OnInotifyEvent(Inotify *inotify, struct inotify_event *event, const std::string &path) override
         {
                 display_inotify_event(event);
                 printf(">>>>>> %s\n", path.c_str());

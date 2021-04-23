@@ -21,7 +21,7 @@ public:
         InotifyObserver(const InotifyObserver &) = delete;
         InotifyObserver &operator= (const InotifyObserver &) = delete;
 
-        virtual int OnNotify(Inotify *inotify, struct inotify_event *event, const std::string &path) = 0;
+        virtual int OnInotifyEvent(Inotify *inotify, struct inotify_event *event, const std::string &path) = 0;
 };
 
 class Inotify
