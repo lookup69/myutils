@@ -11,7 +11,7 @@
 //#include <sys/socket.h>
 //#include <assert.h>
 //#include <string.h>
-
+#include <memory>
 #include "syncSocket.h"
 
 using namespace lkup69;
@@ -22,9 +22,14 @@ using namespace lkup69;
 
 int main()
 {
-        TcpSocketServer sr = SocketServer::Builder<TcpSocketServer<SyncSocket>>().SetAddress("127.0.0.1").SetPort(9981).Build();
+#if 1 // case 1        
+        std::unique_ptr<TcpSocketServer<SyncSocket>> srv;
 
-        if(sr.Init() !=0) {
+        srv = std::make_unique<TcpSocketServer<SyncSocket>>(
+                SocketServer::Builder<TcpSocketServer<SyncSocket>>().SetAddress("127.0.0.1")
+                                                                    .SetPort(9981).Build());
+        
+        if(srv->Init() !=0) {
                 printf("TcpSocketServer init() fail\n");
                 exit(0);
         }
@@ -32,7 +37,27 @@ int main()
         while(1) {
                 std::string str = "hello this is server";
 
-                std::unique_ptr<Socket> s = sr.Accept();
+                std::unique_ptr<Socket> s = srv->Accept();
+                
+                char buf[256] = {0};
+                s->Read(buf, sizeof(buf));
+                printf("C >>> S:%s\n", buf);
+
+                s->Write(str.c_str(), str.size());
+        }
+#else
+        TcpSocketServer<SyncSocket> srv = SocketServer::Builder<TcpSocketServer<SyncSocket>>().SetAddress("127.0.0.1")
+                                                                                              .SetPort(9981).Build();
+        
+        if(srv.Init() !=0) {
+                printf("TcpSocketServer init() fail\n");
+                exit(0);
+        }
+       
+        while(1) {
+                std::string str = "hello this is server";
+
+                std::unique_ptr<Socket> s = srv.Accept();
                 
                 char buf[256] = {0};
                 s->Read(buf, sizeof(buf));
@@ -41,6 +66,7 @@ int main()
                 s->Write(str.c_str(), str.size());
         }
 
+#endif
         return 0;
 }
 #endif

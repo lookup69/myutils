@@ -20,10 +20,12 @@ template <typename S>
 class TcpSocketServer : public SocketServer
 {
         typedef S SOCKET_TYPE;
+TcpSocketServer &operator=(const TcpSocketServer &) = delete;
+TcpSocketServer &operator=(TcpSocketServer &&) = delete;
 
-        TcpSocketServer(const TcpSocketServer &) = delete;
-        TcpSocketServer &operator=(const TcpSocketServer &) = delete;
+        
 public:
+        TcpSocketServer(const TcpSocketServer &) = default;
         TcpSocketServer(const std::string &addr, int port, int maxConnection) :
                 m_addr(addr),
                 m_port(port),

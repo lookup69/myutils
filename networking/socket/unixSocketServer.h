@@ -11,9 +11,9 @@ class UnixSocketServer : public SocketServer
 {
         typedef S SOCKET_TYPE;
 
-        UnixSocketServer(const UnixSocketServer &) = delete;
         UnixSocketServer &operator=(const UnixSocketServer &) = delete;
 public:
+        UnixSocketServer(const UnixSocketServer &) = default;
         UnixSocketServer(const std::string &addr, int port, int maxConnection) :
                 m_addr(addr),
                 m_maxConnection(maxConnection)
