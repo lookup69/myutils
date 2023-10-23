@@ -29,6 +29,7 @@ public:
         template <typename CLASS, typename MFUNC = int>
         int Execute(CLASS &klass, MFUNC mfunc = 0)
         {
+                // normal function
                 if constexpr (std::is_function_v<CLASS>) {
                         curl_easy_setopt(m_curlPtr.get(), CURLOPT_WRITEFUNCTION, &klass);
 
@@ -38,6 +39,8 @@ public:
 
                         return 0;
                 } else if constexpr (std::is_class_v<CLASS>) {
+                        // memver function
+                        // the MFUNC not a int
                         if constexpr (!std::is_integral_v<MFUNC>) {
                                 std::function<size_t(void *, size_t, size_t)> func;
 
@@ -48,6 +51,9 @@ public:
                                 CURLcode res = curl_easy_perform(m_curlPtr.get());
                                 if (res != CURLE_OK)
                                         return -1;
+
+                        // lambda function
+                        // CLASS is the default type INT
                         } else {
                                 std::function<size_t(void *, size_t, size_t)> func;
 
