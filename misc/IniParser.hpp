@@ -10,6 +10,8 @@
 #include <vector>
 #include <map>
 
+namespace lkup69
+{
 struct KeyVal {
         KeyVal(const std::string &k, const std::string &v)
                 : key(k),
@@ -41,9 +43,9 @@ public:
                         const std::string &key,
                         const std::string &defaultVal = std::string{});
 
-        void        Set(const std::string &section,
-                        const std::string &key,
-                        const std::string &val);
+        void Set(const std::string &section,
+                 const std::string &key,
+                 const std::string &val);
 
 #ifdef UNIT_TEST
         void dump(void);
@@ -51,3 +53,4 @@ public:
 private:
         std::map<std::string, std::vector<KeyVal>> m_sectionMap;
 };
+}  // namespace lkup69
