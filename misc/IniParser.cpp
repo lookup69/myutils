@@ -172,6 +172,7 @@ void IniParser::dump(void)
 #endif
 }
 
+// g++ -DUNIT_TEST -o IniParser IniParser.cpp
 int main(int argc, char *argv[])
 {
         IniParser iniParser;
