@@ -145,13 +145,14 @@ void IniParser::Set(const string &section, const string &key, const string &val)
                                                return keyval.key == key;
                                        });
 
-                if (it != m_sectionMap[section].end())
+                if (it != m_sectionMap[section].end()) {
                         it->val = val;
 
                         return;
+                }
         }
         
-        m_sectionMap[section].emplace_back(std::move(KeyVal{ key, val }));
+        m_sectionMap[section].emplace_back(std::forward<KeyVal>(KeyVal{ key, val }));
 }
 
 #ifdef UNIT_TEST

@@ -11,11 +11,11 @@
 namespace lkup69
 {
 
-class CurlAgent
+class CurlHelper
 {
 public:
-        CurlAgent();
-        ~CurlAgent();
+        CurlHelper();
+        ~CurlHelper();
 
         int  SetUrl(const std::string &url);
         int  SetTimeout(int sec);
@@ -44,7 +44,7 @@ public:
                                 m_callback = std::bind(klass, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
                         }
 
-                        curl_easy_setopt(m_curlPtr.get(), CURLOPT_WRITEFUNCTION, &CurlAgent::WriteFunctionWrap_);
+                        curl_easy_setopt(m_curlPtr.get(), CURLOPT_WRITEFUNCTION, &CurlHelper::WriteFunctionWrap_);
                         curl_easy_setopt(m_curlPtr.get(), CURLOPT_WRITEDATA, &m_callback);
                 } else {
                         assert(1);
@@ -72,7 +72,7 @@ public:
                                 m_callback = std::bind(klass, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
                         }
 
-                        curl_easy_setopt(m_curlPtr.get(), CURLOPT_READFUNCTION, &CurlAgent::ReadFunctionWrap_);
+                        curl_easy_setopt(m_curlPtr.get(), CURLOPT_READFUNCTION, &CurlHelper::ReadFunctionWrap_);
                         curl_easy_setopt(m_curlPtr.get(), CURLOPT_READDATA, &m_callback);
                 } else {
                         assert(1);

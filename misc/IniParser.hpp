@@ -18,6 +18,13 @@ struct KeyVal {
                   val(v)
         {
         }
+
+        KeyVal(std::string &&k, std::string &v)
+        {
+                key = std::move(k);
+                val = std::move(v);
+        }
+        
         std::string key;
         std::string val;
 };

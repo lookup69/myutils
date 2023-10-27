@@ -1,20 +1,20 @@
-#include "CurlAgent.hpp"
+#include "CurlHelper.hpp"
 
 using namespace lkup69;
 using namespace std;
 
-CurlAgent::CurlAgent()
+CurlHelper::CurlHelper()
         : m_curlPtr(curl_easy_init(), curl_easy_cleanup)
 {
 }
 
-CurlAgent::~CurlAgent()
+CurlHelper::~CurlHelper()
 {
         if (m_headerListPtr)
                 curl_slist_free_all(m_headerListPtr);
 }
 
-int CurlAgent::SetUrl(const string& url)
+int CurlHelper::SetUrl(const string& url)
 {
         if (!m_curlPtr)
                 return -1;
@@ -25,7 +25,7 @@ int CurlAgent::SetUrl(const string& url)
         return 0;
 }
 
-int CurlAgent::SetTimeout(int sec)
+int CurlHelper::SetTimeout(int sec)
 {
         if (!m_curlPtr)
                 return -1;
@@ -36,7 +36,7 @@ int CurlAgent::SetTimeout(int sec)
         return 0;
 }
 
-int CurlAgent::AppendHeader(const std::string& header)
+int CurlHelper::AppendHeader(const std::string& header)
 {
         m_headerListPtr = curl_slist_append(m_headerListPtr, header.c_str());
 
@@ -46,7 +46,7 @@ int CurlAgent::AppendHeader(const std::string& header)
         return 0;
 }
 
-void CurlAgent::ResetHeader(void)
+void CurlHelper::ResetHeader(void)
 {
         if (m_headerListPtr) {
                 curl_slist_free_all(m_headerListPtr);
@@ -54,7 +54,7 @@ void CurlAgent::ResetHeader(void)
         }
 }
 
-CURLcode CurlAgent::Get(long& httpCode)
+CURLcode CurlHelper::Get(long& httpCode)
 {
         CURLcode res;
 
@@ -70,7 +70,7 @@ CURLcode CurlAgent::Get(long& httpCode)
         return curl_easy_getinfo(m_curlPtr.get(), CURLINFO_RESPONSE_CODE, &httpCode);
 }
 
-CURLcode CurlAgent::Post(const string& data, long& httpCode)
+CURLcode CurlHelper::Post(const string& data, long& httpCode)
 {
         CURLcode res;
 
@@ -86,6 +86,7 @@ CURLcode CurlAgent::Post(const string& data, long& httpCode)
         return curl_easy_getinfo(m_curlPtr.get(), CURLINFO_RESPONSE_CODE, &httpCode);
 }
 
+// g++ -DUNIT_TEST -o CurlHelper CurlHelper.cpp -lcurl
 #ifdef UNIT_TEST
 #include <stdio.h>
 
@@ -173,64 +174,64 @@ int main()
 #if 0        
         {
                 // nornaml function
-                CurlAgent curlAgent;
+                CurlHelper CurlHelper;
                 long      httpCode;
 
-                curlAgent.SetUrl("example.com");
-                curlAgent.SetTimeout(10);
+                CurlHelper.SetUrl("example.com");
+                CurlHelper.SetTimeout(10);
 
                 // if not SetWriteFunction will out the respond to the stdout
                 // the curl original behavior
-                curlAgent.SetWriteFunction(test_read);
-                if (curlAgent.Get(httpCode) == CURLE_OK)
+                CurlHelper.SetWriteFunction(test_read);
+                if (CurlHelper.Get(httpCode) == CURLE_OK)
                         printf("httpCode:%ld\n", httpCode);
         }
 
         {
                 // nornaml function
-                CurlAgent curlAgent;
+                CurlHelper CurlHelper;
                 long      httpCode;
                 char      data[] = "normal function test";
 
-                curlAgent.SetUrl("example.com");
-                curlAgent.SetTimeout(10);
+                CurlHelper.SetUrl("example.com");
+                CurlHelper.SetTimeout(10);
 
                 // if not SetWriteFunction will out the respond to the stdout
                 // the curl original behavior
-                curlAgent.SetWriteFunction(test_read_1, data);
-                if (curlAgent.Get(httpCode) == CURLE_OK)
+                CurlHelper.SetWriteFunction(test_read_1, data);
+                if (CurlHelper.Get(httpCode) == CURLE_OK)
                         printf("httpCode:%ld\n", httpCode);
         }
 
         {
                 // nornaml function
-                CurlAgent curlAgent;
+                CurlHelper CurlHelper;
                 long      httpCode;
                 string    data = "normal function test";
 
-                curlAgent.SetUrl("example.com");
-                curlAgent.SetTimeout(10);
+                CurlHelper.SetUrl("example.com");
+                CurlHelper.SetTimeout(10);
 
                 // if not SetWriteFunction will out the respond to the stdout
                 // the curl original behavior
-                curlAgent.SetWriteFunction(test_read_2, &data);
-                if (curlAgent.Get(httpCode) == CURLE_OK)
+                CurlHelper.SetWriteFunction(test_read_2, &data);
+                if (CurlHelper.Get(httpCode) == CURLE_OK)
                         printf("httpCode:%ld\n", httpCode);
         }
 
         {
                 // member function
-                CurlAgent curlAgent;
+                CurlHelper CurlHelper;
                 TestRead  testRead;
                 long      httpCode;
 
-                curlAgent.SetUrl("example.com");
-                curlAgent.SetTimeout(10);
+                CurlHelper.SetUrl("example.com");
+                CurlHelper.SetTimeout(10);
 
                 // if not SetWriteFunction will out the respond to the stdout
                 // the curl original behavior
-                curlAgent.SetWriteFunction(testRead, &TestRead::Read);
-                if (curlAgent.Get(httpCode) == CURLE_OK)
+                CurlHelper.SetWriteFunction(testRead, &TestRead::Read);
+                if (CurlHelper.Get(httpCode) == CURLE_OK)
                         printf("httpCode:%ld\n", httpCode);
         }
 
@@ -246,16 +247,16 @@ int main()
 
                         return real_size;
                 };
-                CurlAgent curlAgent;
+                CurlHelper CurlHelper;
                 long      httpCode;
 
-                curlAgent.SetUrl("example.com");
-                curlAgent.SetTimeout(10);
+                CurlHelper.SetUrl("example.com");
+                CurlHelper.SetTimeout(10);
 
                 // if not SetWriteFunction will out the respond to the stdout
                 // the curl original behavior
-                curlAgent.SetWriteFunction(read__);
-                if (curlAgent.Get(httpCode) == CURLE_OK)
+                CurlHelper.SetWriteFunction(read__);
+                if (CurlHelper.Get(httpCode) == CURLE_OK)
                         printf("httpCode:%ld\n", httpCode);
         }
 #endif
@@ -269,16 +270,16 @@ int main()
                               "sollicitudin semper. Praesent sit amet tellus varius, posuere nulla non, "
                               "rhoncus ipsum.";
                 // nornaml function
-                CurlAgent curlAgent;
+                CurlHelper CurlHelper;
                 long      httpCode;
 
-                curlAgent.SetUrl("https://example.com/index.cgi");
-                curlAgent.SetTimeout(10);
+                CurlHelper.SetUrl("https://example.com/index.cgi");
+                CurlHelper.SetTimeout(10);
 
                 // if not SetWriteFunction will out the respond to the stdout
                 // the curl original behavior
-                curlAgent.SetWriteFunction(test_read);
-                if (curlAgent.Post(data, httpCode) == CURLE_OK)
+                CurlHelper.SetWriteFunction(test_read);
+                if (CurlHelper.Post(data, httpCode) == CURLE_OK)
                         printf("httpCode:%ld\n", httpCode);
         }
         return 0;
