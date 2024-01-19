@@ -22,6 +22,26 @@ CurlHelper::~CurlHelper()
                 curl_slist_free_all(m_headerListPtr);
 }
 
+int CurlHelper::Verbose(bool enabled)
+{
+        if (!m_curlPtr)
+                return -1;
+
+        curl_easy_setopt(m_curlPtr.get(), CURLOPT_VERBOSE, enabled);
+
+        return 0;
+}
+
+int CurlHelper::FollowLocation(bool enabled)
+{
+        if (!m_curlPtr)
+                return -1;
+
+        curl_easy_setopt(m_curlPtr.get(), CURLOPT_FOLLOWLOCATION, enabled);
+
+        return 0;
+}
+
 int CurlHelper::SetUrl(const string& url)
 {
         if (!m_curlPtr)
@@ -66,10 +86,11 @@ CURLcode CurlHelper::Get(long& httpCode)
 {
         CURLcode res;
 
+        if (m_curlPtr == nullptr)
+                return CURLE_FAILED_INIT;
+
         if (m_headerListPtr)
                 curl_easy_setopt(m_curlPtr.get(), CURLOPT_HTTPHEADER, m_headerListPtr);
-
-        curl_easy_setopt(m_curlPtr.get(), CURLOPT_FOLLOWLOCATION, 1L);
 
         res = curl_easy_perform(m_curlPtr.get());
         if (res != CURLE_OK)
@@ -78,14 +99,38 @@ CURLcode CurlHelper::Get(long& httpCode)
         return curl_easy_getinfo(m_curlPtr.get(), CURLINFO_RESPONSE_CODE, &httpCode);
 }
 
-CURLcode CurlHelper::Post(const string& data, long& httpCode)
+CURLcode CurlHelper::Post(long& httpCode, const string& data)
 {
         CURLcode res;
 
-        curl_easy_setopt(m_curlPtr.get(), CURLOPT_VERBOSE, 1L);
+        if (m_curlPtr == nullptr)
+                return CURLE_FAILED_INIT;
+
+        if (m_headerListPtr)
+                curl_easy_setopt(m_curlPtr.get(), CURLOPT_HTTPHEADER, m_headerListPtr);
+
         curl_easy_setopt(m_curlPtr.get(), CURLOPT_POST, 1L);
         curl_easy_setopt(m_curlPtr.get(), CURLOPT_POSTFIELDS, data.c_str());
         curl_easy_setopt(m_curlPtr.get(), CURLOPT_POSTFIELDSIZE, data.size());
+
+        res = curl_easy_perform(m_curlPtr.get());
+        if (res != CURLE_OK)
+                return res;
+
+        return curl_easy_getinfo(m_curlPtr.get(), CURLINFO_RESPONSE_CODE, &httpCode);
+}
+
+CURLcode CurlHelper::CustomRequest(long& httpCode, const string& command, const string& data)
+{
+        CURLcode res;
+
+        if (m_curlPtr == nullptr)
+                return CURLE_FAILED_INIT;
+
+        curl_easy_setopt(m_curlPtr.get(), CURLOPT_CUSTOMREQUEST, command.c_str());
+
+        if (m_headerListPtr)
+                curl_easy_setopt(m_curlPtr.get(), CURLOPT_HTTPHEADER, m_headerListPtr);
 
         res = curl_easy_perform(m_curlPtr.get());
         if (res != CURLE_OK)
@@ -160,7 +205,9 @@ int main()
                 CurlHelper CurlHelper;
                 long      httpCode;
 
-                CurlHelper.SetUrl("example.com");
+                CurlHelper.Verbose(true);
+                //CurlHelper.SetUrl("example.com");
+                CurlHelper.SetUrl("https://curl.se/libcurl/c/libcurl-tutorial.html");
                 CurlHelper.SetTimeout(10);
 
                 // if not SetWriteFunction will out the respond to the stdout
@@ -169,7 +216,7 @@ int main()
                 if (CurlHelper.Get(httpCode) == CURLE_OK)
                         printf("httpCode:%ld\n", httpCode);
         }
-
+#if 0
         {
                 // nornaml function
                 CurlHelper CurlHelper;
@@ -243,7 +290,9 @@ int main()
                         printf("httpCode:%ld\n", httpCode);
         }
 #endif
+#endif
 
+#if 0
         // download file
         {
                 ofstream ofile;
@@ -273,6 +322,7 @@ int main()
                                 printf("httpCode:%ld\n", httpCode);
                 }
         }
+#endif
 
 #if 0        
         {
@@ -293,11 +343,70 @@ int main()
                 // if not SetWriteFunction will out the respond to the stdout
                 // the curl original behavior
                 CurlHelper.SetWriteFunction(test_read);
-                if (CurlHelper.Post(data, httpCode) == CURLE_OK)
+                if (CurlHelper.Post(httpCode, data) == CURLE_OK)
                         printf("httpCode:%ld\n", httpCode);
         }
 #endif
 
+#if 1
+        {
+                // nornaml function
+                CurlHelper CurlHelper;
+                long       httpCode;
+
+                auto header__ = [](char* ptr, size_t size, size_t nitems) -> size_t {
+                        printf(">>>>>>>>>>>>>>>>>>>>> %s <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", __PRETTY_FUNCTION__);
+                        printf("%s", ptr);
+                        printf(">>>>>>>>>>>>>>>>>>>>> %s <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", __PRETTY_FUNCTION__);
+
+                        return size * nitems;
+                };
+
+                auto upload__ = [](char* ptr, size_t size, size_t nmemb) -> size_t {
+                        string html = "<head></head><body> <H1>Hello</H1></body>";
+                        sprintf(ptr, "%s", html.c_str());
+                        printf(">>>>>>>>>>>>>>>>>>>>> %s <<<<<<<<<<<<<<<<<<<<<<<<<<<\n", __PRETTY_FUNCTION__);
+
+                        return html.size();
+                };
+
+                CurlHelper.Verbose(true);
+                CurlHelper.SetUrl("127.0.0.1:8080/proxy/aaa");
+                // CurlHelper.SetHeaderFunction(header__);
+                CurlHelper.SetReadFunction(upload__);
+
+                if (CurlHelper.CustomRequest(httpCode, "SERVE") == CURLE_OK)
+                        printf("httpCode:%ld\n", httpCode);
+
+                // CurlHelper.SetReadFunction(upload__);
+
+                // if (CurlHelper.CustomRequest(httpCode, "SERVE") == CURLE_OK)
+                //         printf("httpCode:%ld\n", httpCode);
+        }
+#if 0
+        {
+                CurlHelper CurlHelper;
+                long       httpCode;
+
+                auto upload__ = [](char* ptr, size_t size, size_t nmemb) -> size_t {
+                        string html = "<head></head><body> <H1>Hello</H1></body>";
+                        sprintf(ptr, "%s", html.c_str());
+                        printf(">>>>>>>>>>>>>>>>>>>>> %s <<<<<<<<<<<<<<<<<<<<<<<<<<<\n", __PRETTY_FUNCTION__);
+
+                        return html.size();
+                };
+
+                CurlHelper.Verbose(true);
+                CurlHelper.SetUrl("127.0.0.1:8080/proxy/aaa");
+                CurlHelper.SetTimeout(10);
+
+                CurlHelper.SetReadFunction(upload__);
+
+                if (CurlHelper.CustomRequest(httpCode, "SERVE") == CURLE_OK)
+                        printf("httpCode:%ld\n", httpCode);
+        }
+#endif
+#endif
         return 0;
 }
 #endif
